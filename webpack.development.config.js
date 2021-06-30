@@ -15,8 +15,9 @@ module.exports = {
     },
     resolve: {
         fallback: {
+            assert: require.resolve("assert/"),
             fs: false,
-            path: false
+            path: false,
         },
         extensions: [".js", ".ejs"],
     },

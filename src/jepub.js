@@ -1,21 +1,25 @@
-'use strict';
+"use strict";
 
-import * as utils from './utils';
-import imageType from 'image-type';
+import * as utils from "./utils";
+import imageType from "image-type";
 
-import language from './i18n.json';
+import language from "./i18n.json";
 
-import container from './tpl/epub/META-INF/container.xml';
-import cover from './tpl/epub/OEBPS/front-cover.html.ejs';
-import notes from './tpl/epub/OEBPS/notes.html.ejs';
-import page from './tpl/epub/OEBPS/page.html.ejs';
-import tocInBook from './tpl/epub/OEBPS/table-of-contents.html.ejs';
-import info from './tpl/epub/OEBPS/title-page.html.ejs';
-import bookConfig from './tpl/epub/book.opf.ejs';
-const mime = "application/epub+zip"
-import toc from './tpl/epub/toc.ncx.ejs';
-import JSZip from 'jszip';
-import ejs from 'ejs';
+const container = `<?xml version="1.0" encoding="UTF-8" ?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+\t<rootfiles>
+\t\t<rootfile full-path="book.opf" media-type="application/oebps-package+xml" />
+\t</rootfiles>
+</container>`;
+
+const mime = "application/epub+zip";
+
+import { makeCover, makeNotes, makePage, makeToc, makeInfo } from './templates/OEBPS'
+
+import { bookConfig } from './templates/epub'
+import {toc} from './templates/epub'
+
+import JSZip from "jszip";
 
 export default class jEpub {
     constructor() {
@@ -37,39 +41,42 @@ export default class jEpub {
             return this;
         }
 
-        this._Info = Object.assign({}, {
-            i18n: 'en',
-            title: 'undefined',
-            author: 'undefined',
-            publisher: 'undefined',
-            description: '',
-            tags: []
-        }, details);
+        this._Info = Object.assign(
+            {},
+            {
+                i18n: "en",
+                title: "undefined",
+                author: "undefined",
+                publisher: "undefined",
+                description: "",
+                tags: [],
+            },
+            details
+        );
 
         this._Uuid = {
-            scheme: 'uuid',
-            id: utils.uuidv4()
+            scheme: "uuid",
+            id: utils.uuidv4(),
         };
 
         this._Date = utils.getISODate();
 
-        if (!language[this._Info.i18n]) throw `Unknown Language: ${this._Info.i18n}`;
+        if (!language[this._Info.i18n])
+            throw `Unknown Language: ${this._Info.i18n}`;
         this._I18n = language[this._Info.i18n];
 
         this._Zip = new JSZip();
-        this._Zip.file('mimetype', mime);
-        this._Zip.file('META-INF/container.xml', container);
-        this._Zip.file('OEBPS/title-page.html', ejs.render(info, {
-            i18n: this._I18n,
-            title: this._Info.title,
-            author: this._Info.author,
-            publisher: this._Info.publisher,
-            description: utils.parseDOM(this._Info.description),
-            tags: this._Info.tags,
-        }, {
-            client: true
-        }));
-
+        this._Zip.file("mimetype", mime);
+        this._Zip.file("epub/container.xml", container);
+        this._Zip.file(
+            "OEBPS/title-page.html",
+            makeInfo(this._I18n,
+            this._Info.title,
+            this._Info.author,
+            this._Info.publisher,
+            this._Info.tags,
+            utils.parseDOM(this._Info.description))
+        );
         return this;
     }
 
@@ -82,20 +89,19 @@ export default class jEpub {
             this._Date = utils.getISODate(date);
             return this;
         } else {
-            throw 'Date object is not valid';
+            throw "Date object is not valid";
         }
     }
 
     uuid(id) {
         if (utils.isEmpty(id)) {
-            throw 'UUID value is empty';
+            throw "UUID value is empty";
         } else {
-            let scheme = 'uuid';
-            if (utils.validateUrl(id))
-                scheme = 'URI';
+            let scheme = "uuid";
+            if (utils.validateUrl(id)) scheme = "URI";
             this._Uuid = {
                 scheme: scheme,
-                id: id
+                id: id,
             };
             return this;
         }
@@ -113,25 +119,23 @@ export default class jEpub {
                 ext = utils.mime2ext(mime);
             }
         } else {
-            throw 'Cover data is not valid';
+            throw "Cover data is not valid";
         }
-        if (!ext) throw 'Cover data is not allowed';
+        if (!ext) throw "Cover data is not allowed";
 
         this._Cover = {
             type: mime,
-            path: `OEBPS/cover-image.${ext}`
+            path: `OEBPS/cover-image.${ext}`,
         };
         this._Zip.file(this._Cover.path, data);
-        this._Zip.file('OEBPS/front-cover.html', ejs.render(cover, {
-            i18n: this._I18n,
-            cover: this._Cover
-        }, {
-            client: true
-        }));
+        this._Zip.file(
+            "OEBPS/front-cover.html",
+            makeCover(this._I18n, this._Cover.path)
+        );
         return this;
     }
 
-    image(data, name) {
+    image(data, name, alt="") {
         let ext, mime;
         if (data instanceof Blob) {
             mime = data.type;
@@ -141,14 +145,15 @@ export default class jEpub {
             mime = ext.mime;
             if (ext) ext = utils.mime2ext(mime);
         } else {
-            throw 'Image data is not valid';
+            throw "Image data is not valid";
         }
-        if (!ext) throw 'Image data is not allowed';
+        if (!ext) throw "Image data is not allowed";
 
         const filePath = `assets/${name}.${ext}`;
         this._Images[name] = {
             type: mime,
-            path: filePath
+            path: filePath,
+            alt
         };
         this._Zip.file(`OEBPS/${filePath}`, data);
         return this;
@@ -156,95 +161,88 @@ export default class jEpub {
 
     notes(content) {
         if (utils.isEmpty(content)) {
-            throw 'Notes is empty';
+            throw "Notes is empty";
         } else {
-            this._Zip.file('OEBPS/notes.html', ejs.render(notes, {
-                i18n: this._I18n,
-                notes: utils.parseDOM(content)
-            }, {
-                client: true
-            }));
+            this._Zip.file(
+                "OEBPS/notes.html",
+                makeNotes(this._I18n,  utils.parseDOM(content))
+            );
             return this;
         }
     }
 
     add(title, content, index = this._Pages.length) {
         if (utils.isEmpty(title)) {
-            throw 'Title is empty';
+            throw "Title is empty";
         } else if (utils.isEmpty(content)) {
             throw `Content of ${title} is empty`;
         } else {
             if (!Array.isArray(content)) {
-                const template = ejs.compile(content, {
-                    client: true
-                });
-                content = template({
-                    image: this._Images
-                }, data => {
-                    return `<img src="${(data ? data.path: 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=')}" alt=""></img>`;
-                });
+
+                this._Images.forEach((img, index) => {
+                    content = content.replace(`{{ ${img.name} }}`, `<img src="${img.path}" alt=""> </img>`);
+                })
                 content = utils.parseDOM(content);
             }
-            this._Zip.file(`OEBPS/page-${index}.html`, ejs.render(page, {
-                i18n: this._I18n,
-                title: title,
-                content: content
-            }, {
-                client: true
-            }));
+            this._Zip.file(
+                `OEBPS/page-${index}.html`,
+                makePage(this._I18n, title, content)
+            );
             this._Pages[index] = title;
             return this;
         }
     }
 
-    generate(type = 'blob', onUpdate) {
+    generate(type = "blob", onUpdate) {
         if (!JSZip.support[type]) throw `This browser does not support ${type}`;
 
-        let notes = this._Zip.file('OEBPS/notes.html');
+        let notes = this._Zip.file("OEBPS/notes.html");
         notes = !!notes;
 
-        this._Zip.file('book.opf', ejs.render(bookConfig, {
-            i18n: this._I18n,
-            uuid: this._Uuid,
-            date: this._Date,
-            title: this._Info.title,
-            author: this._Info.author,
-            publisher: this._Info.publisher,
-            description: utils.html2text(this._Info.description, true),
-            tags: this._Info.tags,
-            cover: this._Cover,
-            pages: this._Pages,
-            notes: notes,
-            images: this._Images
-        }, {
-            client: true
-        }));
+        this._Zip.file(
+            "book.opf",
 
-        this._Zip.file('OEBPS/table-of-contents.html', ejs.render(tocInBook, {
-            i18n: this._I18n,
-            pages: this._Pages
-        }, {
-            client: true
-        }));
+            bookConfig(
+            this._I18n,
+            this._Uuid,
+            this._Date,
+            this._Info.title,
+            this._Info.author,
+            this._Info.publisher,
+            utils.html2text(this._Info.description, true),
+            this._Info.tags,
+            this._Cover,
+            this._Pages,
+            notes,
+            this._Images
+            )
+        );
 
-        this._Zip.file('toc.ncx', ejs.render(toc, {
-            i18n: this._I18n,
-            uuid: this._Uuid,
-            title: this._Info.title,
-            author: this._Info.author,
-            pages: this._Pages,
-            notes: notes
-        }, {
-            client: true
-        }));
+        this._Zip.file(
+            "OEBPS/table-of-contents.html",
+            makeToc(this._I18n,this._Pages)
+        );
 
-        return this._Zip.generateAsync({
-            type: type,
-            mimeType: mime,
-            compression: 'DEFLATE',
-            compressionOptions: {
-                level: 9
-            }
-        }, onUpdate);
+        this._Zip.file(
+            "toc.ncx",
+            toc(this._I18n,
+            this._Uuid,
+            this._Info.title,
+            this._Info.author,
+            this._Pages,
+            notes)
+        );
+
+        return this._Zip.generateAsync(
+            {
+                type: type,
+                mimeType: mime,
+                compression: "DEFLATE",
+                compressionOptions: {
+                    level: 9,
+                },
+            },
+            onUpdate
+        );
     }
 }

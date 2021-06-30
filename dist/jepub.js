@@ -50,30 +50,22 @@ var _imageType = _interopRequireDefault(__webpack_require__(/*! image-type */ ".
 
 var _i18n = _interopRequireDefault(__webpack_require__(/*! ./i18n.json */ "./src/i18n.json"));
 
-var _container = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/META-INF/container.xml */ "./src/tpl/epub/META-INF/container.xml"));
+var _OEBPS = __webpack_require__(/*! ./templates/OEBPS */ "./src/templates/OEBPS/index.js");
 
-var _frontCoverHtml = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/OEBPS/front-cover.html.ejs */ "./src/tpl/epub/OEBPS/front-cover.html.ejs"));
-
-var _notesHtml = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/OEBPS/notes.html.ejs */ "./src/tpl/epub/OEBPS/notes.html.ejs"));
-
-var _pageHtml = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/OEBPS/page.html.ejs */ "./src/tpl/epub/OEBPS/page.html.ejs"));
-
-var _tableOfContentsHtml = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/OEBPS/table-of-contents.html.ejs */ "./src/tpl/epub/OEBPS/table-of-contents.html.ejs"));
-
-var _titlePageHtml = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/OEBPS/title-page.html.ejs */ "./src/tpl/epub/OEBPS/title-page.html.ejs"));
-
-var _bookOpf = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/book.opf.ejs */ "./src/tpl/epub/book.opf.ejs"));
-
-var _tocNcx = _interopRequireDefault(__webpack_require__(/*! ./tpl/epub/toc.ncx.ejs */ "./src/tpl/epub/toc.ncx.ejs"));
+var _epub = __webpack_require__(/*! ./templates/epub */ "./src/templates/epub.js");
 
 var _jszip = _interopRequireDefault(__webpack_require__(/*! jszip */ "./node_modules/jszip/dist/jszip.min.js"));
-
-var _ejs = _interopRequireDefault(__webpack_require__(/*! ejs */ "./node_modules/ejs/lib/ejs.js"));
 
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
+const container = `<?xml version="1.0" encoding="UTF-8" ?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+\t<rootfiles>
+\t\t<rootfile full-path="book.opf" media-type="application/oebps-package+xml" />
+\t</rootfiles>
+</container>`;
 const mime = "application/epub+zip";
 
 class jEpub {
@@ -95,15 +87,15 @@ class jEpub {
     }
 
     this._Info = Object.assign({}, {
-      i18n: 'en',
-      title: 'undefined',
-      author: 'undefined',
-      publisher: 'undefined',
-      description: '',
+      i18n: "en",
+      title: "undefined",
+      author: "undefined",
+      publisher: "undefined",
+      description: "",
       tags: []
     }, details);
     this._Uuid = {
-      scheme: 'uuid',
+      scheme: "uuid",
       id: utils.uuidv4()
     };
     this._Date = utils.getISODate();
@@ -111,20 +103,11 @@ class jEpub {
     this._I18n = _i18n.default[this._Info.i18n];
     this._Zip = new _jszip.default();
 
-    this._Zip.file('mimetype', mime);
+    this._Zip.file("mimetype", mime);
 
-    this._Zip.file('META-INF/container.xml', _container.default);
+    this._Zip.file("epub/container.xml", container);
 
-    this._Zip.file('OEBPS/title-page.html', _ejs.default.render(_titlePageHtml.default, {
-      i18n: this._I18n,
-      title: this._Info.title,
-      author: this._Info.author,
-      publisher: this._Info.publisher,
-      description: utils.parseDOM(this._Info.description),
-      tags: this._Info.tags
-    }, {
-      client: true
-    }));
+    this._Zip.file("OEBPS/title-page.html", (0, _OEBPS.makeInfo)(this._I18n, this._Info.title, this._Info.author, this._Info.publisher, this._Info.tags, utils.parseDOM(this._Info.description)));
 
     return this;
   }
@@ -138,16 +121,16 @@ class jEpub {
       this._Date = utils.getISODate(date);
       return this;
     } else {
-      throw 'Date object is not valid';
+      throw "Date object is not valid";
     }
   }
 
   uuid(id) {
     if (utils.isEmpty(id)) {
-      throw 'UUID value is empty';
+      throw "UUID value is empty";
     } else {
-      let scheme = 'uuid';
-      if (utils.validateUrl(id)) scheme = 'URI';
+      let scheme = "uuid";
+      if (utils.validateUrl(id)) scheme = "URI";
       this._Uuid = {
         scheme: scheme,
         id: id
@@ -170,10 +153,10 @@ class jEpub {
         ext = utils.mime2ext(mime);
       }
     } else {
-      throw 'Cover data is not valid';
+      throw "Cover data is not valid";
     }
 
-    if (!ext) throw 'Cover data is not allowed';
+    if (!ext) throw "Cover data is not allowed";
     this._Cover = {
       type: mime,
       path: `OEBPS/cover-image.${ext}`
@@ -181,17 +164,12 @@ class jEpub {
 
     this._Zip.file(this._Cover.path, data);
 
-    this._Zip.file('OEBPS/front-cover.html', _ejs.default.render(_frontCoverHtml.default, {
-      i18n: this._I18n,
-      cover: this._Cover
-    }, {
-      client: true
-    }));
+    this._Zip.file("OEBPS/front-cover.html", (0, _OEBPS.makeCover)(this._I18n, this._Cover.path));
 
     return this;
   }
 
-  image(data, name) {
+  image(data, name, alt = "") {
     let ext, mime;
 
     if (data instanceof Blob) {
@@ -202,14 +180,15 @@ class jEpub {
       mime = ext.mime;
       if (ext) ext = utils.mime2ext(mime);
     } else {
-      throw 'Image data is not valid';
+      throw "Image data is not valid";
     }
 
-    if (!ext) throw 'Image data is not allowed';
+    if (!ext) throw "Image data is not allowed";
     const filePath = `assets/${name}.${ext}`;
     this._Images[name] = {
       type: mime,
-      path: filePath
+      path: filePath,
+      alt
     };
 
     this._Zip.file(`OEBPS/${filePath}`, data);
@@ -219,14 +198,9 @@ class jEpub {
 
   notes(content) {
     if (utils.isEmpty(content)) {
-      throw 'Notes is empty';
+      throw "Notes is empty";
     } else {
-      this._Zip.file('OEBPS/notes.html', _ejs.default.render(_notesHtml.default, {
-        i18n: this._I18n,
-        notes: utils.parseDOM(content)
-      }, {
-        client: true
-      }));
+      this._Zip.file("OEBPS/notes.html", (0, _OEBPS.makeNotes)(this._I18n, utils.parseDOM(content)));
 
       return this;
     }
@@ -234,82 +208,42 @@ class jEpub {
 
   add(title, content, index = this._Pages.length) {
     if (utils.isEmpty(title)) {
-      throw 'Title is empty';
+      throw "Title is empty";
     } else if (utils.isEmpty(content)) {
       throw `Content of ${title} is empty`;
     } else {
       if (!Array.isArray(content)) {
-        const template = _ejs.default.compile(content, {
-          client: true
+        this._Images.forEach((img, index) => {
+          content = content.replace(`{{ ${img.name} }}`, `<img src="${img.path}" alt=""> </img>`);
         });
 
-        content = template({
-          image: this._Images
-        }, data => {
-          return `<img src="${data ? data.path : 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='}" alt=""></img>`;
-        });
         content = utils.parseDOM(content);
       }
 
-      this._Zip.file(`OEBPS/page-${index}.html`, _ejs.default.render(_pageHtml.default, {
-        i18n: this._I18n,
-        title: title,
-        content: content
-      }, {
-        client: true
-      }));
+      this._Zip.file(`OEBPS/page-${index}.html`, (0, _OEBPS.makePage)(this._I18n, title, content));
 
       this._Pages[index] = title;
       return this;
     }
   }
 
-  generate(type = 'blob', onUpdate) {
+  generate(type = "blob", onUpdate) {
     if (!_jszip.default.support[type]) throw `This browser does not support ${type}`;
 
-    let notes = this._Zip.file('OEBPS/notes.html');
+    let notes = this._Zip.file("OEBPS/notes.html");
 
     notes = !!notes;
 
-    this._Zip.file('book.opf', _ejs.default.render(_bookOpf.default, {
-      i18n: this._I18n,
-      uuid: this._Uuid,
-      date: this._Date,
-      title: this._Info.title,
-      author: this._Info.author,
-      publisher: this._Info.publisher,
-      description: utils.html2text(this._Info.description, true),
-      tags: this._Info.tags,
-      cover: this._Cover,
-      pages: this._Pages,
-      notes: notes,
-      images: this._Images
-    }, {
-      client: true
-    }));
+    this._Zip.file("book.opf", (0, _epub.bookConfig)(this._I18n, this._Uuid, this._Date, this._Info.title, this._Info.author, this._Info.publisher, utils.html2text(this._Info.description, true), this._Info.tags, this._Cover, this._Pages, notes, this._Images));
 
-    this._Zip.file('OEBPS/table-of-contents.html', _ejs.default.render(_tableOfContentsHtml.default, {
-      i18n: this._I18n,
-      pages: this._Pages
-    }, {
-      client: true
-    }));
+    this._Zip.file("OEBPS/table-of-contents.html", (0, _OEBPS.makeToc)(this._I18n, this._Pages));
 
-    this._Zip.file('toc.ncx', _ejs.default.render(_tocNcx.default, {
-      i18n: this._I18n,
-      uuid: this._Uuid,
-      title: this._Info.title,
-      author: this._Info.author,
-      pages: this._Pages,
-      notes: notes
-    }, {
-      client: true
-    }));
+    this._Zip.file("toc.ncx", (0, _epub.toc)(this._I18n, this._Uuid, this._Info.title, this._Info.author, this._Pages, notes));
 
     return this._Zip.generateAsync({
       type: type,
       mimeType: mime,
-      compression: 'DEFLATE',
+      compression: "DEFLATE",
       compressionOptions: {
         level: 9
       }
@@ -320,6 +254,431 @@ class jEpub {
 
 exports.default = jEpub;
 module.exports = exports.default;
+
+/***/ }),
+
+/***/ "./src/templates/OEBPS/cover.js":
+/*!**************************************!*\
+  !*** ./src/templates/OEBPS/cover.js ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.cover = cover;
+
+function cover(i18n, coverPath) {
+  return `
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${i18n.code}">
+
+<head>
+\t<title>${i18n.cover}</title>
+\t<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+</head>
+
+<body>
+\t<div id="cover-image">
+\t\t<img src="../${coverPath}" alt="${i18n.cover}" />
+\t</div>
+</body>
+
+</html>
+`;
+}
+
+/***/ }),
+
+/***/ "./src/templates/OEBPS/index.js":
+/*!**************************************!*\
+  !*** ./src/templates/OEBPS/index.js ***!
+  \**************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.default = void 0;
+
+var _cover = __webpack_require__(/*! ./cover */ "./src/templates/OEBPS/cover.js");
+
+var _notes = __webpack_require__(/*! ./notes */ "./src/templates/OEBPS/notes.js");
+
+var _page = __webpack_require__(/*! ./page */ "./src/templates/OEBPS/page.js");
+
+var _toc = __webpack_require__(/*! ./toc */ "./src/templates/OEBPS/toc.js");
+
+var _info = __webpack_require__(/*! ./info */ "./src/templates/OEBPS/info.js");
+
+var _default = {
+  makeCover: _cover.cover,
+  makeNotes: _notes.notes,
+  makePage: _page.page,
+  makeToc: _toc.toc,
+  makeInfo: _info.info
+};
+exports.default = _default;
+module.exports = exports.default;
+
+/***/ }),
+
+/***/ "./src/templates/OEBPS/info.js":
+/*!*************************************!*\
+  !*** ./src/templates/OEBPS/info.js ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.info = info;
+
+function info(i18n, title, author, publisher, tags, description = "") {
+  let buildTags = "";
+  let buildDescription = "";
+
+  if (Array.isArray(tags) && tags.length) {
+    buildTags += "<div class=\"part-title-wrap\">";
+    tags.forEach(tag => {
+      buildTags += `<code> ${tag} </code>`;
+    });
+    buildTags += "</div>";
+  }
+
+  if (description) {
+    buildDescription += `<div class=\"ugc\"> ${description} </div>`;
+  }
+
+  return `
+    <?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${i18n.code}">
+
+<head>
+\t<title>${i18n.info}</title>
+\t<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+</head>
+
+<body>
+\t<div id="title-page">
+\t\t<h1 class="title">${title}</h1>
+\t\t<h2 class="subtitle"></h2>
+\t\t<h3 class="author">${author}</h3>
+\t\t<h4 class="publisher">${publisher}</h4>
+\t</div>
+    ${buildTags}
+
+    ${buildDescription}
+</body>
+
+</html>
+`;
+}
+
+/***/ }),
+
+/***/ "./src/templates/OEBPS/notes.js":
+/*!**************************************!*\
+  !*** ./src/templates/OEBPS/notes.js ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.notes = notes;
+
+function notes(i18n, notes) {
+  return `
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang=" ${i18n.code}">
+
+<head>
+\t<title>${i18n.note}</title>
+\t<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+</head>
+
+<body>
+\t<div id="notes-page">
+\t\t<div class="ugc">
+            ${notes}
+\t\t</div>
+\t</div>
+</body>
+
+</html>
+`;
+}
+
+/***/ }),
+
+/***/ "./src/templates/OEBPS/page.js":
+/*!*************************************!*\
+  !*** ./src/templates/OEBPS/page.js ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.page = page;
+
+function page(i18n, title, content) {
+  let contents = "";
+
+  if (Array.isArray(content)) {
+    content.forEach(item => {
+      contents += `<p class="indent">${item}</p>`;
+    });
+  } else {
+    contents = content;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${i18n.code}">
+
+<head>
+\t<title>${title}</title>
+\t<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+</head>
+
+<body>
+\t<div class="chapter type-1">
+\t\t<div class="chapter-title-wrap">
+\t\t\t<h2 class="chapter-title">${title}</h2>
+\t\t</div>
+\t\t<div class="ugc chapter-ugc">
+            ${contents}
+\t\t</div>
+\t</div>
+</body>
+
+</html>
+`;
+}
+
+/***/ }),
+
+/***/ "./src/templates/OEBPS/toc.js":
+/*!************************************!*\
+  !*** ./src/templates/OEBPS/toc.js ***!
+  \************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.toc = toc;
+
+function toc(i18n, pages) {
+  let buildPages = "";
+  pages.forEach((title, index) => {
+    buildPages += `
+        <li class="chaptertype-1">
+            <a href="page-${index}.html">
+                <span class="toc-chapter-title">${title}</span>
+            </a>
+        </li>
+        `;
+  });
+  return `
+    <?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${i18n.code}">
+
+<head>
+\t<title>${i18n.toc}</title>
+\t<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+</head>
+
+<body>
+\t<div id="toc">
+\t\t<h1>${i18n.toc}</h1>
+\t\t<ul>
+        ${buildPages}
+\t\t</ul>
+\t</div>
+</body>
+
+</html>
+`;
+}
+
+/***/ }),
+
+/***/ "./src/templates/epub.js":
+/*!*******************************!*\
+  !*** ./src/templates/epub.js ***!
+  \*******************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.bookConfig = bookConfig;
+exports.toc = toc;
+
+function bookConfig(i18n, uuid, date, title, author, publisher, description = "", tags, cover, pages, notes, images) {
+  let buildPages = '';
+  let buildTocPages = '';
+  let buildTags = '';
+  let buildImages = '';
+  let buildDescription = description ? `<dc:description>${description}</dc:description>` : '';
+  let buildCover = cover ? `<meta name="cover" content="cover-image" />` : '';
+
+  if (pages && pages.length) {
+    pages.forEach((page, index) => {
+      buildPages += `<item id="page-${index}" href="OEBPS/page-${index}.html" media-type="application/xhtml+xml" />`;
+      buildTocPages += `<itemref idref="page-${index}" linear="yes" />`;
+    });
+  }
+
+  if (tags && tags.length) {
+    tags.forEach(tag => {
+      buildTags += `<dc:subject>${tag}</dc:subject>`;
+    });
+  }
+
+  Object.keys(images).forEach(name => {
+    buildImages += `<item id="${name}" href="OEBPS/${images[name].path}" media-type="${images[name].type}" />`;
+  });
+  return `
+    <?xml version="1.0" encoding="UTF-8" ?>
+<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="PrimaryID">
+
+\t<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+\t\t<dc:title>${title}</dc:title>
+\t\t<dc:language>${i18n.code}</dc:language>
+\t\t<dc:identifier id="PrimaryID" opf:scheme="${uuid.scheme}">${uuid.id}</dc:identifier>
+        <dc:date opf:event="publication">${date}</dc:date>
+        ${buildDescription}
+\t\t<dc:creator opf:role="aut">${author}</dc:creator>
+\t\t<dc:publisher>${publisher}</dc:publisher>
+        ${buildCover}
+        ${buildTags}
+\t</metadata>
+
+\t<manifest>
+\t\t    ${cover ? '<item id="front-cover" href="OEBPS/front-cover.html" media-type="application/xhtml+xml" />' : ''}
+\t\t<item id="title-page" href="OEBPS/title-page.html" media-type="application/xhtml+xml" />
+\t\t<item id="notes" href="OEBPS/notes.html" media-type="application/xhtml+xml" />
+\t\t<item id="table-of-contents" href="OEBPS/table-of-contents.html" media-type="application/xhtml+xml" />
+        ${buildPages}
+
+\t\t   ${cover ? `<item id="cover-image" href="${cover.path}" media-type="${cover.type}" properties="cover-image" />` : ''}
+
+\t\t<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />
+        ${buildImages}
+\t</manifest>
+
+\t<spine toc="ncx">
+\t\t    ${cover ? '<itemref idref="front-cover" linear="no" />' : ''}
+\t\t<itemref idref="title-page" linear="yes" />
+\t\t<itemref idref="table-of-contents" linear="yes" />
+        ${buildTocPages}
+
+        ${notes ? `<itemref idref="notes" linear="yes" />` : ''}
+\t</spine>
+
+\t<guide>
+\t\t    ${cover ? `<reference type="cover" title="${i18n.cover}" href="OEBPS/front-cover.html" />` : ''}
+\t\t<reference type="toc" title="${i18n.toc}" href="OEBPS/table-of-contents.html" />
+\t</guide>
+
+</package>
+`;
+}
+
+function toc(i18n, uuid, title, author, pages) {
+  let buildPages = '';
+  let buildNotes = '';
+
+  if (pages && pages.length) {
+    pages.forEach((title, index) => {
+      buildPages += `
+            <navPoint id="page-${index}" playOrder="${index + 3}">
+                <navLabel>
+                    <text>${title}</text>
+                </navLabel>
+                <content src="OEBPS/page-${index}.html" />
+            </navPoint>`;
+    });
+  }
+
+  if (notes) {
+    buildNotes = `
+        <navPoint id="notes-page" playOrder="2">
+                <navLabel>
+                    <text>${i18n.note}</text>
+                </navLabel>
+                <content src="OEBPS/notes.html" />
+            </navPoint>`;
+  }
+
+  return `
+    <?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+
+<ncx version="2005-1" xml:lang="${i18n.code}" xmlns="http://www.daisy.org/z3986/2005/ncx/">
+\t<head>
+\t\t<meta name="dtb:uid" content="${uuid.id}" />
+\t\t<meta name="dtb:depth" content="2" />
+\t\t<meta name="dtb:totalPageCount" content="0" />
+\t\t<meta name="dtb:maxPageNumber" content="0" />
+\t</head>
+
+\t<docTitle>
+\t\t<text>${title}</text>
+\t</docTitle>
+
+\t<docAuthor>
+\t\t<text>${author}</text>
+\t</docAuthor>
+
+\t<navMap>
+\t\t<navPoint id="title-page" playOrder="1">
+\t\t\t<navLabel>
+\t\t\t\t<text>${i18n.info}</text>
+\t\t\t</navLabel>
+\t\t\t<content src="OEBPS/title-page.html" />
+\t\t</navPoint>
+\t\t<navPoint id="table-of-contents" playOrder="2">
+\t\t\t<navLabel>
+\t\t\t\t<text>${i18n.toc}</text>
+\t\t\t</navLabel>
+\t\t\t<content src="OEBPS/table-of-contents.html" />
+\t\t</navPoint>
+        ${buildPages}
+        ${buildNotes}
+\t</navMap>
+</ncx>
+`;
+}
 
 /***/ }),
 
@@ -343,6 +702,7 @@ exports.parseDOM = parseDOM;
 exports.html2text = html2text;
 exports.validateUrl = validateUrl;
 exports.mime2ext = mime2ext;
+exports.render = render;
 
 /**
  * Generates a UUID
@@ -361,7 +721,7 @@ function uuidv4() {
 
 function isObject(obj) {
   const type = typeof obj;
-  return type === 'function' || type === 'object' && !!obj;
+  return type === "function" || type === "object" && !!obj;
 }
 /**
  * Checks if a value is empty
@@ -372,7 +732,7 @@ function isObject(obj) {
 function isEmpty(val) {
   if (val === null) {
     return true;
-  } else if (typeof val === 'string') {
+  } else if (typeof val === "string") {
     return !val.trim();
   }
 
@@ -396,10 +756,10 @@ function getISODate(date = new Date()) {
 
 
 function parseDOM(html, outText = false) {
-  let doc = new DOMParser().parseFromString(`<!doctype html><body>${html}`, 'text/html');
+  let doc = new DOMParser().parseFromString(`<!doctype html><body>${html}`, "text/html");
   if (outText) return doc.body.textContent.trim();
   doc = new XMLSerializer().serializeToString(doc.body);
-  doc = doc.replace(/(^<body\s?[^>]*>|<\/body>$)/g, '');
+  doc = doc.replace(/(^<body\s?[^>]*>|<\/body>$)/g, "");
   return doc;
 }
 /**
@@ -409,15 +769,15 @@ function parseDOM(html, outText = false) {
 
 
 function html2text(html, noBr = false) {
-  html = html.replace(/<style([\s\S]*?)<\/style>/gi, '');
-  html = html.replace(/<script([\s\S]*?)<\/script>/gi, '');
-  html = html.replace(/<\/(div|p|li|dd|h[1-6])>/gi, '\n');
-  html = html.replace(/<(br|hr)\s*[/]?>/gi, '\n');
-  html = html.replace(/<li>/ig, '+ ');
-  html = html.replace(/<[^>]+>/g, '');
-  html = html.replace(/\n{3,}/g, '\n\n');
+  html = html.replace(/<style([\s\S]*?)<\/style>/gi, "");
+  html = html.replace(/<script([\s\S]*?)<\/script>/gi, "");
+  html = html.replace(/<\/(div|p|li|dd|h[1-6])>/gi, "\n");
+  html = html.replace(/<(br|hr)\s*[/]?>/gi, "\n");
+  html = html.replace(/<li>/gi, "+ ");
+  html = html.replace(/<[^>]+>/g, "");
+  html = html.replace(/\n{3,}/g, "\n\n");
   html = parseDOM(html, true);
-  if (noBr) html = html.replace(/\n+/g, ' ');
+  if (noBr) html = html.replace(/\n+/g, " ");
   return html;
 }
 /**
@@ -439,21 +799,21 @@ function mime2ext(mime) {
   let ext = null;
 
   switch (mime) {
-    case 'image/jpg':
-    case 'image/jpeg':
-      ext = 'jpg';
+    case "image/jpg":
+    case "image/jpeg":
+      ext = "jpg";
       break;
 
-    case 'image/svg+xml':
-      ext = 'svg';
+    case "image/svg+xml":
+      ext = "svg";
       break;
 
-    case 'image/gif':
-    case 'image/apng':
-    case 'image/png':
-    case 'image/webp':
-    case 'image/bmp':
-      ext = mime.split('/')[1];
+    case "image/gif":
+    case "image/apng":
+    case "image/png":
+    case "image/webp":
+    case "image/bmp":
+      ext = mime.split("/")[1];
       break;
 
     default:
@@ -462,6 +822,13 @@ function mime2ext(mime) {
   }
 
   return ext;
+}
+
+function render(template, data) {
+  Object.keys(data).forEach(key => {
+    template = template.replaceAll(`{{ ${key} }}`, data[key]);
+  });
+  return template;
 } // TODO: kepub
 // Wrap text, image <span class="koboSpan" id="kobo.{para:số thứ tự đoạn văn, bắt đầu bằng 1}.{seg: số thứ tự cụm bị wrap, bắt đầu bằng 1}">text</span>
 // https://github.com/pgaskin/kepubify/blob/871aa0bb2047b5ba171bc608024bdb180cb29d70/kepub/transform.go#L173
@@ -473,1157 +840,6 @@ function mime2ext(mime) {
 // 	`>`, "&gt;",
 // 	`"`, "&#34;", // "&#34;" is shorter than "&quot;".
 // )
-
-/***/ }),
-
-/***/ "./node_modules/ejs/lib/ejs.js":
-/*!*************************************!*\
-  !*** ./node_modules/ejs/lib/ejs.js ***!
-  \*************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-/*
- * EJS Embedded JavaScript templates
- * Copyright 2112 Matthew Eernisse (mde@fleegix.org)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
-*/
-
-
-
-/**
- * @file Embedded JavaScript templating engine. {@link http://ejs.co}
- * @author Matthew Eernisse <mde@fleegix.org>
- * @author Tiancheng "Timothy" Gu <timothygu99@gmail.com>
- * @project EJS
- * @license {@link http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0}
- */
-
-/**
- * EJS internal functions.
- *
- * Technically this "module" lies in the same file as {@link module:ejs}, for
- * the sake of organization all the private functions re grouped into this
- * module.
- *
- * @module ejs-internal
- * @private
- */
-
-/**
- * Embedded JavaScript templating engine.
- *
- * @module ejs
- * @public
- */
-
-var fs = __webpack_require__(/*! fs */ "?a259");
-var path = __webpack_require__(/*! path */ "?a5fc");
-var utils = __webpack_require__(/*! ./utils */ "./node_modules/ejs/lib/utils.js");
-
-var scopeOptionWarned = false;
-/** @type {string} */
-var _VERSION_STRING = __webpack_require__(/*! ../package.json */ "./node_modules/ejs/package.json").version;
-var _DEFAULT_OPEN_DELIMITER = '<';
-var _DEFAULT_CLOSE_DELIMITER = '>';
-var _DEFAULT_DELIMITER = '%';
-var _DEFAULT_LOCALS_NAME = 'locals';
-var _NAME = 'ejs';
-var _REGEX_STRING = '(<%%|%%>|<%=|<%-|<%_|<%#|<%|%>|-%>|_%>)';
-var _OPTS_PASSABLE_WITH_DATA = ['delimiter', 'scope', 'context', 'debug', 'compileDebug',
-  'client', '_with', 'rmWhitespace', 'strict', 'filename', 'async'];
-// We don't allow 'cache' option to be passed in the data obj for
-// the normal `render` call, but this is where Express 2 & 3 put it
-// so we make an exception for `renderFile`
-var _OPTS_PASSABLE_WITH_DATA_EXPRESS = _OPTS_PASSABLE_WITH_DATA.concat('cache');
-var _BOM = /^\uFEFF/;
-
-/**
- * EJS template function cache. This can be a LRU object from lru-cache NPM
- * module. By default, it is {@link module:utils.cache}, a simple in-process
- * cache that grows continuously.
- *
- * @type {Cache}
- */
-
-exports.cache = utils.cache;
-
-/**
- * Custom file loader. Useful for template preprocessing or restricting access
- * to a certain part of the filesystem.
- *
- * @type {fileLoader}
- */
-
-exports.fileLoader = fs.readFileSync;
-
-/**
- * Name of the object containing the locals.
- *
- * This variable is overridden by {@link Options}`.localsName` if it is not
- * `undefined`.
- *
- * @type {String}
- * @public
- */
-
-exports.localsName = _DEFAULT_LOCALS_NAME;
-
-/**
- * Promise implementation -- defaults to the native implementation if available
- * This is mostly just for testability
- *
- * @type {PromiseConstructorLike}
- * @public
- */
-
-exports.promiseImpl = (new Function('return this;'))().Promise;
-
-/**
- * Get the path to the included file from the parent file path and the
- * specified path.
- *
- * @param {String}  name     specified path
- * @param {String}  filename parent file path
- * @param {Boolean} [isDir=false] whether the parent file path is a directory
- * @return {String}
- */
-exports.resolveInclude = function(name, filename, isDir) {
-  var dirname = path.dirname;
-  var extname = path.extname;
-  var resolve = path.resolve;
-  var includePath = resolve(isDir ? filename : dirname(filename), name);
-  var ext = extname(name);
-  if (!ext) {
-    includePath += '.ejs';
-  }
-  return includePath;
-};
-
-/**
- * Try to resolve file path on multiple directories
- *
- * @param  {String}        name  specified path
- * @param  {Array<String>} paths list of possible parent directory paths
- * @return {String}
- */
-function resolvePaths(name, paths) {
-  var filePath;
-  if (paths.some(function (v) {
-    filePath = exports.resolveInclude(name, v, true);
-    return fs.existsSync(filePath);
-  })) {
-    return filePath;
-  }
-}
-
-/**
- * Get the path to the included file by Options
- *
- * @param  {String}  path    specified path
- * @param  {Options} options compilation options
- * @return {String}
- */
-function getIncludePath(path, options) {
-  var includePath;
-  var filePath;
-  var views = options.views;
-  var match = /^[A-Za-z]+:\\|^\//.exec(path);
-
-  // Abs path
-  if (match && match.length) {
-    path = path.replace(/^\/*/, '');
-    if (Array.isArray(options.root)) {
-      includePath = resolvePaths(path, options.root);
-    } else {
-      includePath = exports.resolveInclude(path, options.root || '/', true);
-    }
-  }
-  // Relative paths
-  else {
-    // Look relative to a passed filename first
-    if (options.filename) {
-      filePath = exports.resolveInclude(path, options.filename);
-      if (fs.existsSync(filePath)) {
-        includePath = filePath;
-      }
-    }
-    // Then look in any views directories
-    if (!includePath && Array.isArray(views)) {
-      includePath = resolvePaths(path, views);
-    }
-    if (!includePath && typeof options.includer !== 'function') {
-      throw new Error('Could not find the include file "' +
-          options.escapeFunction(path) + '"');
-    }
-  }
-  return includePath;
-}
-
-/**
- * Get the template from a string or a file, either compiled on-the-fly or
- * read from cache (if enabled), and cache the template if needed.
- *
- * If `template` is not set, the file specified in `options.filename` will be
- * read.
- *
- * If `options.cache` is true, this function reads the file from
- * `options.filename` so it must be set prior to calling this function.
- *
- * @memberof module:ejs-internal
- * @param {Options} options   compilation options
- * @param {String} [template] template source
- * @return {(TemplateFunction|ClientFunction)}
- * Depending on the value of `options.client`, either type might be returned.
- * @static
- */
-
-function handleCache(options, template) {
-  var func;
-  var filename = options.filename;
-  var hasTemplate = arguments.length > 1;
-
-  if (options.cache) {
-    if (!filename) {
-      throw new Error('cache option requires a filename');
-    }
-    func = exports.cache.get(filename);
-    if (func) {
-      return func;
-    }
-    if (!hasTemplate) {
-      template = fileLoader(filename).toString().replace(_BOM, '');
-    }
-  }
-  else if (!hasTemplate) {
-    // istanbul ignore if: should not happen at all
-    if (!filename) {
-      throw new Error('Internal EJS error: no file name or template '
-                    + 'provided');
-    }
-    template = fileLoader(filename).toString().replace(_BOM, '');
-  }
-  func = exports.compile(template, options);
-  if (options.cache) {
-    exports.cache.set(filename, func);
-  }
-  return func;
-}
-
-/**
- * Try calling handleCache with the given options and data and call the
- * callback with the result. If an error occurs, call the callback with
- * the error. Used by renderFile().
- *
- * @memberof module:ejs-internal
- * @param {Options} options    compilation options
- * @param {Object} data        template data
- * @param {RenderFileCallback} cb callback
- * @static
- */
-
-function tryHandleCache(options, data, cb) {
-  var result;
-  if (!cb) {
-    if (typeof exports.promiseImpl == 'function') {
-      return new exports.promiseImpl(function (resolve, reject) {
-        try {
-          result = handleCache(options)(data);
-          resolve(result);
-        }
-        catch (err) {
-          reject(err);
-        }
-      });
-    }
-    else {
-      throw new Error('Please provide a callback function');
-    }
-  }
-  else {
-    try {
-      result = handleCache(options)(data);
-    }
-    catch (err) {
-      return cb(err);
-    }
-
-    cb(null, result);
-  }
-}
-
-/**
- * fileLoader is independent
- *
- * @param {String} filePath ejs file path.
- * @return {String} The contents of the specified file.
- * @static
- */
-
-function fileLoader(filePath){
-  return exports.fileLoader(filePath);
-}
-
-/**
- * Get the template function.
- *
- * If `options.cache` is `true`, then the template is cached.
- *
- * @memberof module:ejs-internal
- * @param {String}  path    path for the specified file
- * @param {Options} options compilation options
- * @return {(TemplateFunction|ClientFunction)}
- * Depending on the value of `options.client`, either type might be returned
- * @static
- */
-
-function includeFile(path, options) {
-  var opts = utils.shallowCopy({}, options);
-  opts.filename = getIncludePath(path, opts);
-  if (typeof options.includer === 'function') {
-    var includerResult = options.includer(path, opts.filename);
-    if (includerResult) {
-      if (includerResult.filename) {
-        opts.filename = includerResult.filename;
-      }
-      if (includerResult.template) {
-        return handleCache(opts, includerResult.template);
-      }
-    }
-  }
-  return handleCache(opts);
-}
-
-/**
- * Re-throw the given `err` in context to the `str` of ejs, `filename`, and
- * `lineno`.
- *
- * @implements {RethrowCallback}
- * @memberof module:ejs-internal
- * @param {Error}  err      Error object
- * @param {String} str      EJS source
- * @param {String} flnm     file name of the EJS file
- * @param {Number} lineno   line number of the error
- * @param {EscapeCallback} esc
- * @static
- */
-
-function rethrow(err, str, flnm, lineno, esc) {
-  var lines = str.split('\n');
-  var start = Math.max(lineno - 3, 0);
-  var end = Math.min(lines.length, lineno + 3);
-  var filename = esc(flnm);
-  // Error context
-  var context = lines.slice(start, end).map(function (line, i){
-    var curr = i + start + 1;
-    return (curr == lineno ? ' >> ' : '    ')
-      + curr
-      + '| '
-      + line;
-  }).join('\n');
-
-  // Alter exception message
-  err.path = filename;
-  err.message = (filename || 'ejs') + ':'
-    + lineno + '\n'
-    + context + '\n\n'
-    + err.message;
-
-  throw err;
-}
-
-function stripSemi(str){
-  return str.replace(/;(\s*$)/, '$1');
-}
-
-/**
- * Compile the given `str` of ejs into a template function.
- *
- * @param {String}  template EJS template
- *
- * @param {Options} [opts] compilation options
- *
- * @return {(TemplateFunction|ClientFunction)}
- * Depending on the value of `opts.client`, either type might be returned.
- * Note that the return type of the function also depends on the value of `opts.async`.
- * @public
- */
-
-exports.compile = function compile(template, opts) {
-  var templ;
-
-  // v1 compat
-  // 'scope' is 'context'
-  // FIXME: Remove this in a future version
-  if (opts && opts.scope) {
-    if (!scopeOptionWarned){
-      console.warn('`scope` option is deprecated and will be removed in EJS 3');
-      scopeOptionWarned = true;
-    }
-    if (!opts.context) {
-      opts.context = opts.scope;
-    }
-    delete opts.scope;
-  }
-  templ = new Template(template, opts);
-  return templ.compile();
-};
-
-/**
- * Render the given `template` of ejs.
- *
- * If you would like to include options but not data, you need to explicitly
- * call this function with `data` being an empty object or `null`.
- *
- * @param {String}   template EJS template
- * @param {Object}  [data={}] template data
- * @param {Options} [opts={}] compilation and rendering options
- * @return {(String|Promise<String>)}
- * Return value type depends on `opts.async`.
- * @public
- */
-
-exports.render = function (template, d, o) {
-  var data = d || {};
-  var opts = o || {};
-
-  // No options object -- if there are optiony names
-  // in the data, copy them to options
-  if (arguments.length == 2) {
-    utils.shallowCopyFromList(opts, data, _OPTS_PASSABLE_WITH_DATA);
-  }
-
-  return handleCache(opts, template)(data);
-};
-
-/**
- * Render an EJS file at the given `path` and callback `cb(err, str)`.
- *
- * If you would like to include options but not data, you need to explicitly
- * call this function with `data` being an empty object or `null`.
- *
- * @param {String}             path     path to the EJS file
- * @param {Object}            [data={}] template data
- * @param {Options}           [opts={}] compilation and rendering options
- * @param {RenderFileCallback} cb callback
- * @public
- */
-
-exports.renderFile = function () {
-  var args = Array.prototype.slice.call(arguments);
-  var filename = args.shift();
-  var cb;
-  var opts = {filename: filename};
-  var data;
-  var viewOpts;
-
-  // Do we have a callback?
-  if (typeof arguments[arguments.length - 1] == 'function') {
-    cb = args.pop();
-  }
-  // Do we have data/opts?
-  if (args.length) {
-    // Should always have data obj
-    data = args.shift();
-    // Normal passed opts (data obj + opts obj)
-    if (args.length) {
-      // Use shallowCopy so we don't pollute passed in opts obj with new vals
-      utils.shallowCopy(opts, args.pop());
-    }
-    // Special casing for Express (settings + opts-in-data)
-    else {
-      // Express 3 and 4
-      if (data.settings) {
-        // Pull a few things from known locations
-        if (data.settings.views) {
-          opts.views = data.settings.views;
-        }
-        if (data.settings['view cache']) {
-          opts.cache = true;
-        }
-        // Undocumented after Express 2, but still usable, esp. for
-        // items that are unsafe to be passed along with data, like `root`
-        viewOpts = data.settings['view options'];
-        if (viewOpts) {
-          utils.shallowCopy(opts, viewOpts);
-        }
-      }
-      // Express 2 and lower, values set in app.locals, or people who just
-      // want to pass options in their data. NOTE: These values will override
-      // anything previously set in settings  or settings['view options']
-      utils.shallowCopyFromList(opts, data, _OPTS_PASSABLE_WITH_DATA_EXPRESS);
-    }
-    opts.filename = filename;
-  }
-  else {
-    data = {};
-  }
-
-  return tryHandleCache(opts, data, cb);
-};
-
-/**
- * Clear intermediate JavaScript cache. Calls {@link Cache#reset}.
- * @public
- */
-
-/**
- * EJS template class
- * @public
- */
-exports.Template = Template;
-
-exports.clearCache = function () {
-  exports.cache.reset();
-};
-
-function Template(text, opts) {
-  opts = opts || {};
-  var options = {};
-  this.templateText = text;
-  /** @type {string | null} */
-  this.mode = null;
-  this.truncate = false;
-  this.currentLine = 1;
-  this.source = '';
-  options.client = opts.client || false;
-  options.escapeFunction = opts.escape || opts.escapeFunction || utils.escapeXML;
-  options.compileDebug = opts.compileDebug !== false;
-  options.debug = !!opts.debug;
-  options.filename = opts.filename;
-  options.openDelimiter = opts.openDelimiter || exports.openDelimiter || _DEFAULT_OPEN_DELIMITER;
-  options.closeDelimiter = opts.closeDelimiter || exports.closeDelimiter || _DEFAULT_CLOSE_DELIMITER;
-  options.delimiter = opts.delimiter || exports.delimiter || _DEFAULT_DELIMITER;
-  options.strict = opts.strict || false;
-  options.context = opts.context;
-  options.cache = opts.cache || false;
-  options.rmWhitespace = opts.rmWhitespace;
-  options.root = opts.root;
-  options.includer = opts.includer;
-  options.outputFunctionName = opts.outputFunctionName;
-  options.localsName = opts.localsName || exports.localsName || _DEFAULT_LOCALS_NAME;
-  options.views = opts.views;
-  options.async = opts.async;
-  options.destructuredLocals = opts.destructuredLocals;
-  options.legacyInclude = typeof opts.legacyInclude != 'undefined' ? !!opts.legacyInclude : true;
-
-  if (options.strict) {
-    options._with = false;
-  }
-  else {
-    options._with = typeof opts._with != 'undefined' ? opts._with : true;
-  }
-
-  this.opts = options;
-
-  this.regex = this.createRegex();
-}
-
-Template.modes = {
-  EVAL: 'eval',
-  ESCAPED: 'escaped',
-  RAW: 'raw',
-  COMMENT: 'comment',
-  LITERAL: 'literal'
-};
-
-Template.prototype = {
-  createRegex: function () {
-    var str = _REGEX_STRING;
-    var delim = utils.escapeRegExpChars(this.opts.delimiter);
-    var open = utils.escapeRegExpChars(this.opts.openDelimiter);
-    var close = utils.escapeRegExpChars(this.opts.closeDelimiter);
-    str = str.replace(/%/g, delim)
-      .replace(/</g, open)
-      .replace(/>/g, close);
-    return new RegExp(str);
-  },
-
-  compile: function () {
-    /** @type {string} */
-    var src;
-    /** @type {ClientFunction} */
-    var fn;
-    var opts = this.opts;
-    var prepended = '';
-    var appended = '';
-    /** @type {EscapeCallback} */
-    var escapeFn = opts.escapeFunction;
-    /** @type {FunctionConstructor} */
-    var ctor;
-    /** @type {string} */
-    var sanitizedFilename = opts.filename ? JSON.stringify(opts.filename) : 'undefined';
-
-    if (!this.source) {
-      this.generateSource();
-      prepended +=
-        '  var __output = "";\n' +
-        '  function __append(s) { if (s !== undefined && s !== null) __output += s }\n';
-      if (opts.outputFunctionName) {
-        prepended += '  var ' + opts.outputFunctionName + ' = __append;' + '\n';
-      }
-      if (opts.destructuredLocals && opts.destructuredLocals.length) {
-        var destructuring = '  var __locals = (' + opts.localsName + ' || {}),\n';
-        for (var i = 0; i < opts.destructuredLocals.length; i++) {
-          var name = opts.destructuredLocals[i];
-          if (i > 0) {
-            destructuring += ',\n  ';
-          }
-          destructuring += name + ' = __locals.' + name;
-        }
-        prepended += destructuring + ';\n';
-      }
-      if (opts._with !== false) {
-        prepended +=  '  with (' + opts.localsName + ' || {}) {' + '\n';
-        appended += '  }' + '\n';
-      }
-      appended += '  return __output;' + '\n';
-      this.source = prepended + this.source + appended;
-    }
-
-    if (opts.compileDebug) {
-      src = 'var __line = 1' + '\n'
-        + '  , __lines = ' + JSON.stringify(this.templateText) + '\n'
-        + '  , __filename = ' + sanitizedFilename + ';' + '\n'
-        + 'try {' + '\n'
-        + this.source
-        + '} catch (e) {' + '\n'
-        + '  rethrow(e, __lines, __filename, __line, escapeFn);' + '\n'
-        + '}' + '\n';
-    }
-    else {
-      src = this.source;
-    }
-
-    if (opts.client) {
-      src = 'escapeFn = escapeFn || ' + escapeFn.toString() + ';' + '\n' + src;
-      if (opts.compileDebug) {
-        src = 'rethrow = rethrow || ' + rethrow.toString() + ';' + '\n' + src;
-      }
-    }
-
-    if (opts.strict) {
-      src = '"use strict";\n' + src;
-    }
-    if (opts.debug) {
-      console.log(src);
-    }
-    if (opts.compileDebug && opts.filename) {
-      src = src + '\n'
-        + '//# sourceURL=' + sanitizedFilename + '\n';
-    }
-
-    try {
-      if (opts.async) {
-        // Have to use generated function for this, since in envs without support,
-        // it breaks in parsing
-        try {
-          ctor = (new Function('return (async function(){}).constructor;'))();
-        }
-        catch(e) {
-          if (e instanceof SyntaxError) {
-            throw new Error('This environment does not support async/await');
-          }
-          else {
-            throw e;
-          }
-        }
-      }
-      else {
-        ctor = Function;
-      }
-      fn = new ctor(opts.localsName + ', escapeFn, include, rethrow', src);
-    }
-    catch(e) {
-      // istanbul ignore else
-      if (e instanceof SyntaxError) {
-        if (opts.filename) {
-          e.message += ' in ' + opts.filename;
-        }
-        e.message += ' while compiling ejs\n\n';
-        e.message += 'If the above error is not helpful, you may want to try EJS-Lint:\n';
-        e.message += 'https://github.com/RyanZim/EJS-Lint';
-        if (!opts.async) {
-          e.message += '\n';
-          e.message += 'Or, if you meant to create an async function, pass `async: true` as an option.';
-        }
-      }
-      throw e;
-    }
-
-    // Return a callable function which will execute the function
-    // created by the source-code, with the passed data as locals
-    // Adds a local `include` function which allows full recursive include
-    var returnedFn = opts.client ? fn : function anonymous(data) {
-      var include = function (path, includeData) {
-        var d = utils.shallowCopy({}, data);
-        if (includeData) {
-          d = utils.shallowCopy(d, includeData);
-        }
-        return includeFile(path, opts)(d);
-      };
-      return fn.apply(opts.context, [data || {}, escapeFn, include, rethrow]);
-    };
-    if (opts.filename && typeof Object.defineProperty === 'function') {
-      var filename = opts.filename;
-      var basename = path.basename(filename, path.extname(filename));
-      try {
-        Object.defineProperty(returnedFn, 'name', {
-          value: basename,
-          writable: false,
-          enumerable: false,
-          configurable: true
-        });
-      } catch (e) {/* ignore */}
-    }
-    return returnedFn;
-  },
-
-  generateSource: function () {
-    var opts = this.opts;
-
-    if (opts.rmWhitespace) {
-      // Have to use two separate replace here as `^` and `$` operators don't
-      // work well with `\r` and empty lines don't work well with the `m` flag.
-      this.templateText =
-        this.templateText.replace(/[\r\n]+/g, '\n').replace(/^\s+|\s+$/gm, '');
-    }
-
-    // Slurp spaces and tabs before <%_ and after _%>
-    this.templateText =
-      this.templateText.replace(/[ \t]*<%_/gm, '<%_').replace(/_%>[ \t]*/gm, '_%>');
-
-    var self = this;
-    var matches = this.parseTemplateText();
-    var d = this.opts.delimiter;
-    var o = this.opts.openDelimiter;
-    var c = this.opts.closeDelimiter;
-
-    if (matches && matches.length) {
-      matches.forEach(function (line, index) {
-        var closing;
-        // If this is an opening tag, check for closing tags
-        // FIXME: May end up with some false positives here
-        // Better to store modes as k/v with openDelimiter + delimiter as key
-        // Then this can simply check against the map
-        if ( line.indexOf(o + d) === 0        // If it is a tag
-          && line.indexOf(o + d + d) !== 0) { // and is not escaped
-          closing = matches[index + 2];
-          if (!(closing == d + c || closing == '-' + d + c || closing == '_' + d + c)) {
-            throw new Error('Could not find matching close tag for "' + line + '".');
-          }
-        }
-        self.scanLine(line);
-      });
-    }
-
-  },
-
-  parseTemplateText: function () {
-    var str = this.templateText;
-    var pat = this.regex;
-    var result = pat.exec(str);
-    var arr = [];
-    var firstPos;
-
-    while (result) {
-      firstPos = result.index;
-
-      if (firstPos !== 0) {
-        arr.push(str.substring(0, firstPos));
-        str = str.slice(firstPos);
-      }
-
-      arr.push(result[0]);
-      str = str.slice(result[0].length);
-      result = pat.exec(str);
-    }
-
-    if (str) {
-      arr.push(str);
-    }
-
-    return arr;
-  },
-
-  _addOutput: function (line) {
-    if (this.truncate) {
-      // Only replace single leading linebreak in the line after
-      // -%> tag -- this is the single, trailing linebreak
-      // after the tag that the truncation mode replaces
-      // Handle Win / Unix / old Mac linebreaks -- do the \r\n
-      // combo first in the regex-or
-      line = line.replace(/^(?:\r\n|\r|\n)/, '');
-      this.truncate = false;
-    }
-    if (!line) {
-      return line;
-    }
-
-    // Preserve literal slashes
-    line = line.replace(/\\/g, '\\\\');
-
-    // Convert linebreaks
-    line = line.replace(/\n/g, '\\n');
-    line = line.replace(/\r/g, '\\r');
-
-    // Escape double-quotes
-    // - this will be the delimiter during execution
-    line = line.replace(/"/g, '\\"');
-    this.source += '    ; __append("' + line + '")' + '\n';
-  },
-
-  scanLine: function (line) {
-    var self = this;
-    var d = this.opts.delimiter;
-    var o = this.opts.openDelimiter;
-    var c = this.opts.closeDelimiter;
-    var newLineCount = 0;
-
-    newLineCount = (line.split('\n').length - 1);
-
-    switch (line) {
-    case o + d:
-    case o + d + '_':
-      this.mode = Template.modes.EVAL;
-      break;
-    case o + d + '=':
-      this.mode = Template.modes.ESCAPED;
-      break;
-    case o + d + '-':
-      this.mode = Template.modes.RAW;
-      break;
-    case o + d + '#':
-      this.mode = Template.modes.COMMENT;
-      break;
-    case o + d + d:
-      this.mode = Template.modes.LITERAL;
-      this.source += '    ; __append("' + line.replace(o + d + d, o + d) + '")' + '\n';
-      break;
-    case d + d + c:
-      this.mode = Template.modes.LITERAL;
-      this.source += '    ; __append("' + line.replace(d + d + c, d + c) + '")' + '\n';
-      break;
-    case d + c:
-    case '-' + d + c:
-    case '_' + d + c:
-      if (this.mode == Template.modes.LITERAL) {
-        this._addOutput(line);
-      }
-
-      this.mode = null;
-      this.truncate = line.indexOf('-') === 0 || line.indexOf('_') === 0;
-      break;
-    default:
-      // In script mode, depends on type of tag
-      if (this.mode) {
-        // If '//' is found without a line break, add a line break.
-        switch (this.mode) {
-        case Template.modes.EVAL:
-        case Template.modes.ESCAPED:
-        case Template.modes.RAW:
-          if (line.lastIndexOf('//') > line.lastIndexOf('\n')) {
-            line += '\n';
-          }
-        }
-        switch (this.mode) {
-        // Just executing code
-        case Template.modes.EVAL:
-          this.source += '    ; ' + line + '\n';
-          break;
-          // Exec, esc, and output
-        case Template.modes.ESCAPED:
-          this.source += '    ; __append(escapeFn(' + stripSemi(line) + '))' + '\n';
-          break;
-          // Exec and output
-        case Template.modes.RAW:
-          this.source += '    ; __append(' + stripSemi(line) + ')' + '\n';
-          break;
-        case Template.modes.COMMENT:
-          // Do nothing
-          break;
-          // Literal <%% mode, append as raw output
-        case Template.modes.LITERAL:
-          this._addOutput(line);
-          break;
-        }
-      }
-      // In string mode, just add the output
-      else {
-        this._addOutput(line);
-      }
-    }
-
-    if (self.opts.compileDebug && newLineCount) {
-      this.currentLine += newLineCount;
-      this.source += '    ; __line = ' + this.currentLine + '\n';
-    }
-  }
-};
-
-/**
- * Escape characters reserved in XML.
- *
- * This is simply an export of {@link module:utils.escapeXML}.
- *
- * If `markup` is `undefined` or `null`, the empty string is returned.
- *
- * @param {String} markup Input string
- * @return {String} Escaped string
- * @public
- * @func
- * */
-exports.escapeXML = utils.escapeXML;
-
-/**
- * Express.js support.
- *
- * This is an alias for {@link module:ejs.renderFile}, in order to support
- * Express.js out-of-the-box.
- *
- * @func
- */
-
-exports.__express = exports.renderFile;
-
-/**
- * Version of EJS.
- *
- * @readonly
- * @type {String}
- * @public
- */
-
-exports.VERSION = _VERSION_STRING;
-
-/**
- * Name for detection of EJS.
- *
- * @readonly
- * @type {String}
- * @public
- */
-
-exports.name = _NAME;
-
-/* istanbul ignore if */
-if (typeof window != 'undefined') {
-  window.ejs = exports;
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/ejs/lib/utils.js":
-/*!***************************************!*\
-  !*** ./node_modules/ejs/lib/utils.js ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-/*
- * EJS Embedded JavaScript templates
- * Copyright 2112 Matthew Eernisse (mde@fleegix.org)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
-*/
-
-/**
- * Private utility functions
- * @module utils
- * @private
- */
-
-
-
-var regExpChars = /[|\\{}()[\]^$+*?.]/g;
-
-/**
- * Escape characters reserved in regular expressions.
- *
- * If `string` is `undefined` or `null`, the empty string is returned.
- *
- * @param {String} string Input string
- * @return {String} Escaped string
- * @static
- * @private
- */
-exports.escapeRegExpChars = function (string) {
-  // istanbul ignore if
-  if (!string) {
-    return '';
-  }
-  return String(string).replace(regExpChars, '\\$&');
-};
-
-var _ENCODE_HTML_RULES = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&#34;',
-  "'": '&#39;'
-};
-var _MATCH_HTML = /[&<>'"]/g;
-
-function encode_char(c) {
-  return _ENCODE_HTML_RULES[c] || c;
-}
-
-/**
- * Stringified version of constants used by {@link module:utils.escapeXML}.
- *
- * It is used in the process of generating {@link ClientFunction}s.
- *
- * @readonly
- * @type {String}
- */
-
-var escapeFuncStr =
-  'var _ENCODE_HTML_RULES = {\n'
-+ '      "&": "&amp;"\n'
-+ '    , "<": "&lt;"\n'
-+ '    , ">": "&gt;"\n'
-+ '    , \'"\': "&#34;"\n'
-+ '    , "\'": "&#39;"\n'
-+ '    }\n'
-+ '  , _MATCH_HTML = /[&<>\'"]/g;\n'
-+ 'function encode_char(c) {\n'
-+ '  return _ENCODE_HTML_RULES[c] || c;\n'
-+ '};\n';
-
-/**
- * Escape characters reserved in XML.
- *
- * If `markup` is `undefined` or `null`, the empty string is returned.
- *
- * @implements {EscapeCallback}
- * @param {String} markup Input string
- * @return {String} Escaped string
- * @static
- * @private
- */
-
-exports.escapeXML = function (markup) {
-  return markup == undefined
-    ? ''
-    : String(markup)
-      .replace(_MATCH_HTML, encode_char);
-};
-exports.escapeXML.toString = function () {
-  return Function.prototype.toString.call(this) + ';\n' + escapeFuncStr;
-};
-
-/**
- * Naive copy of properties from one object to another.
- * Does not recurse into non-scalar properties
- * Does not check to see if the property has a value before copying
- *
- * @param  {Object} to   Destination object
- * @param  {Object} from Source object
- * @return {Object}      Destination object
- * @static
- * @private
- */
-exports.shallowCopy = function (to, from) {
-  from = from || {};
-  for (var p in from) {
-    to[p] = from[p];
-  }
-  return to;
-};
-
-/**
- * Naive copy of a list of key names, from one object to another.
- * Only copies property if it is actually defined
- * Does not recurse into non-scalar properties
- *
- * @param  {Object} to   Destination object
- * @param  {Object} from Source object
- * @param  {Array} list List of properties to copy
- * @return {Object}      Destination object
- * @static
- * @private
- */
-exports.shallowCopyFromList = function (to, from, list) {
-  for (var i = 0; i < list.length; i++) {
-    var p = list[i];
-    if (typeof from[p] != 'undefined') {
-      to[p] = from[p];
-    }
-  }
-  return to;
-};
-
-/**
- * Simple in-process cache implementation. Does not implement limits of any
- * sort.
- *
- * @implements {Cache}
- * @static
- * @private
- */
-exports.cache = {
-  _data: {},
-  set: function (key, val) {
-    this._data[key] = val;
-  },
-  get: function (key) {
-    return this._data[key];
-  },
-  remove: function (key) {
-    delete this._data[key];
-  },
-  reset: function () {
-    this._data = {};
-  }
-};
-
-/**
- * Transforms hyphen case variable into camel case.
- *
- * @param {String} string Hyphen case string
- * @return {String} Camel case string
- * @static
- * @private
- */
-exports.hyphenToCamel = function (str) {
-  return str.replace(/-[a-z]/g, function (match) { return match[1].toUpperCase(); });
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/ejs/package.json":
-/*!***************************************!*\
-  !*** ./node_modules/ejs/package.json ***!
-  \***************************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = JSON.parse('{"name":"ejs","description":"Embedded JavaScript templates","keywords":["template","engine","ejs"],"version":"3.1.6","author":"Matthew Eernisse <mde@fleegix.org> (http://fleegix.org)","license":"Apache-2.0","bin":{"ejs":"./bin/cli.js"},"main":"./lib/ejs.js","jsdelivr":"ejs.min.js","unpkg":"ejs.min.js","repository":{"type":"git","url":"git://github.com/mde/ejs.git"},"bugs":"https://github.com/mde/ejs/issues","homepage":"https://github.com/mde/ejs","dependencies":{"jake":"^10.6.1"},"devDependencies":{"browserify":"^16.5.1","eslint":"^6.8.0","git-directory-deploy":"^1.5.1","jsdoc":"^3.6.4","lru-cache":"^4.0.1","mocha":"^7.1.1","uglify-js":"^3.3.16"},"engines":{"node":">=0.10.0"},"scripts":{"test":"mocha"}}');
 
 /***/ }),
 
@@ -2658,126 +1874,6 @@ https://github.com/nodeca/pako/blob/master/LICENSE
 
 /***/ }),
 
-/***/ "./src/tpl/epub/META-INF/container.xml":
-/*!*********************************************!*\
-  !*** ./src/tpl/epub/META-INF/container.xml ***!
-  \*********************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">\n\t<rootfiles>\n\t\t<rootfile full-path=\"book.opf\" media-type=\"application/oebps-package+xml\" />\n\t</rootfiles>\n</container>");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/OEBPS/front-cover.html.ejs":
-/*!*************************************************!*\
-  !*** ./src/tpl/epub/OEBPS/front-cover.html.ejs ***!
-  \*************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"<%= i18n.code %>\">\n\n<head>\n\t<title><%= i18n.cover %></title>\n\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />\n</head>\n\n<body>\n\t<div id=\"cover-image\">\n\t\t<img src=\"../<%= cover.path %>\" alt=\"<%= i18n.cover %>\" />\n\t</div>\n</body>\n\n</html>\n");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/OEBPS/notes.html.ejs":
-/*!*******************************************!*\
-  !*** ./src/tpl/epub/OEBPS/notes.html.ejs ***!
-  \*******************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"<%= i18n.code %>\">\n\n<head>\n\t<title><%= i18n.note %></title>\n\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />\n</head>\n\n<body>\n\t<div id=\"notes-page\">\n\t\t<div class=\"ugc\">\n            <%- notes %>\n\t\t</div>\n\t</div>\n</body>\n\n</html>\n");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/OEBPS/page.html.ejs":
-/*!******************************************!*\
-  !*** ./src/tpl/epub/OEBPS/page.html.ejs ***!
-  \******************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"<%= i18n.code %>\">\n\n<head>\n\t<title><%= title %></title>\n\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />\n</head>\n\n<body>\n\t<div class=\"chapter type-1\">\n\t\t<div class=\"chapter-title-wrap\">\n\t\t\t<h2 class=\"chapter-title\"><%= title %></h2>\n\t\t</div>\n\t\t<div class=\"ugc chapter-ugc\">\n            <% if (Array.isArray(content)) { %>\n                <% content.forEach(item => { %>\n                    <p class=\"indent\"><%= item %></p>\n                <% }); %>\n            <% } else { %>\n                <%- content %>\n            <% } %>\n\t\t</div>\n\t</div>\n</body>\n\n</html>\n");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/OEBPS/table-of-contents.html.ejs":
-/*!*******************************************************!*\
-  !*** ./src/tpl/epub/OEBPS/table-of-contents.html.ejs ***!
-  \*******************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"<%= i18n.code %>\">\n\n<head>\n\t<title><%= i18n.toc %></title>\n\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />\n</head>\n\n<body>\n\t<div id=\"toc\">\n\t\t<h1><%= i18n.toc %></h1>\n\t\t<ul>\n            <% pages.forEach((title, index) => { %>\n                <li class=\"chaptertype-1\">\n                    <a href=\"page-<%= index %>.html\">\n                        <span class=\"toc-chapter-title\"><%= title %></span>\n                    </a>\n                </li>\n            <% }); %>\n\t\t</ul>\n\t</div>\n</body>\n\n</html>\n");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/OEBPS/title-page.html.ejs":
-/*!************************************************!*\
-  !*** ./src/tpl/epub/OEBPS/title-page.html.ejs ***!
-  \************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"<%= i18n.code %>\">\n\n<head>\n\t<title><%= i18n.info %></title>\n\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />\n</head>\n\n<body>\n\t<div id=\"title-page\">\n\t\t<h1 class=\"title\"><%= title %></h1>\n\t\t<h2 class=\"subtitle\"></h2>\n\t\t<h3 class=\"author\"><%= author %></h3>\n\t\t<h4 class=\"publisher\"><%= publisher %></h4>\n\t</div>\n    <% if (Array.isArray(tags) && tags.length) { %>\n        <div class=\"part-title-wrap\">\n            <% tags = tags.join('</code>, <code>'); %>\n            <code><%- tags %></code>\n        </div>\n    <% } %>\n    <% if (description) { %>\n        <div class=\"ugc\">\n            <%- description %>\n        </div>\n    <% } %>\n</body>\n\n</html>\n");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/book.opf.ejs":
-/*!***********************************!*\
-  !*** ./src/tpl/epub/book.opf.ejs ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<package version=\"2.0\" xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"PrimaryID\">\n\n\t<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:opf=\"http://www.idpf.org/2007/opf\">\n\t\t<dc:title><%= title %></dc:title>\n\t\t<dc:language><%= i18n.code %></dc:language>\n\t\t<dc:identifier id=\"PrimaryID\" opf:scheme=\"<%= uuid.scheme %>\"><%= uuid.id %></dc:identifier>\n        <dc:date opf:event=\"publication\"><%= date %></dc:date>\n        <% if (description) { %>\n\t\t    <dc:description><%= description %></dc:description>\n        <% } %>\n\t\t<dc:creator opf:role=\"aut\"><%= author %></dc:creator>\n\t\t<dc:publisher><%= publisher %></dc:publisher>\n        <% if (cover) { %>\n\t\t    <meta name=\"cover\" content=\"cover-image\" />\n        <% } %>\n        <% if (Array.isArray(tags) && tags.length) tags.forEach(tag => { %>\n            <dc:subject><%= tag %></dc:subject>\n        <% }); %>\n\t</metadata>\n\n\t<manifest>\n        <% if (cover) { %>\n\t\t    <item id=\"front-cover\" href=\"OEBPS/front-cover.html\" media-type=\"application/xhtml+xml\" />\n        <% } %>\n\t\t<item id=\"title-page\" href=\"OEBPS/title-page.html\" media-type=\"application/xhtml+xml\" />\n\t\t<item id=\"notes\" href=\"OEBPS/notes.html\" media-type=\"application/xhtml+xml\" />\n\t\t<item id=\"table-of-contents\" href=\"OEBPS/table-of-contents.html\" media-type=\"application/xhtml+xml\" />\n        <% pages.forEach((page, index) => { %>\n            <item id=\"page-<%= index %>\" href=\"OEBPS/page-<%= index %>.html\" media-type=\"application/xhtml+xml\" />\n        <% }); %>\n        <% if (cover) { %>\n\t\t    <item id=\"cover-image\" href=\"<%= cover.path %>\" media-type=\"<%= cover.type %>\" properties=\"cover-image\" />\n        <% } %>\n\t\t<item id=\"ncx\" href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\" />\n        <% Object.keys(images).forEach(name => { %>\n            <item id=\"<%= name %>\" href=\"OEBPS/<%= images[name].path %>\" media-type=\"<%= images[name].type %>\" />\n        <% }); %>\n\t</manifest>\n\n\t<spine toc=\"ncx\">\n        <% if (cover) { %>\n\t\t    <itemref idref=\"front-cover\" linear=\"no\" />\n        <% } %>\n\t\t<itemref idref=\"title-page\" linear=\"yes\" />\n\t\t<itemref idref=\"table-of-contents\" linear=\"yes\" />\n        <% pages.forEach((page, index) => { %>\n            <itemref idref=\"page-<%= index %>\" linear=\"yes\" />\n        <% }); %>\n        <% if (notes) { %>\n            <itemref idref=\"notes\" linear=\"yes\" />\n        <% } %>\n\t</spine>\n\n\t<guide>\n        <% if (cover) { %>\n\t\t    <reference type=\"cover\" title=\"<%= i18n.cover %>\" href=\"OEBPS/front-cover.html\" />\n        <% } %>\n\t\t<reference type=\"toc\" title=\"<%= i18n.toc %>\" href=\"OEBPS/table-of-contents.html\" />\n\t</guide>\n\n</package>\n");
-
-/***/ }),
-
-/***/ "./src/tpl/epub/toc.ncx.ejs":
-/*!**********************************!*\
-  !*** ./src/tpl/epub/toc.ncx.ejs ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE ncx PUBLIC \"-//NISO//DTD ncx 2005-1//EN\" \"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd\">\n\n<ncx version=\"2005-1\" xml:lang=\"<%= i18n.code %>\" xmlns=\"http://www.daisy.org/z3986/2005/ncx/\">\n\t<head>\n\t\t<meta name=\"dtb:uid\" content=\"<%= uuid.id %>\" />\n\t\t<meta name=\"dtb:depth\" content=\"2\" />\n\t\t<meta name=\"dtb:totalPageCount\" content=\"0\" />\n\t\t<meta name=\"dtb:maxPageNumber\" content=\"0\" />\n\t</head>\n\n\t<docTitle>\n\t\t<text><%= title %></text>\n\t</docTitle>\n\n\t<docAuthor>\n\t\t<text><%= author %></text>\n\t</docAuthor>\n\n\t<navMap>\n\t\t<navPoint id=\"title-page\" playOrder=\"1\">\n\t\t\t<navLabel>\n\t\t\t\t<text><%= i18n.info %></text>\n\t\t\t</navLabel>\n\t\t\t<content src=\"OEBPS/title-page.html\" />\n\t\t</navPoint>\n\t\t<navPoint id=\"table-of-contents\" playOrder=\"2\">\n\t\t\t<navLabel>\n\t\t\t\t<text><%= i18n.toc %></text>\n\t\t\t</navLabel>\n\t\t\t<content src=\"OEBPS/table-of-contents.html\" />\n\t\t</navPoint>\n        <% pages.forEach((title, index) => { %>\n            <navPoint id=\"page-<%= index %>\" playOrder=\"<%= (index + 3) %>\">\n                <navLabel>\n                    <text><%= title %></text>\n                </navLabel>\n                <content src=\"OEBPS/page-<%= index %>.html\" />\n            </navPoint>\n        <% }); %>\n        <% if (notes) { %>\n            <navPoint id=\"notes-page\" playOrder=\"2\">\n                <navLabel>\n                    <text><%= i18n.note %></text>\n                </navLabel>\n                <content src=\"OEBPS/notes.html\" />\n            </navPoint>\n        <% } %>\n\t</navMap>\n</ncx>\n");
-
-/***/ }),
-
 /***/ "./src/i18n.json":
 /*!***********************!*\
   !*** ./src/i18n.json ***!
@@ -2785,27 +1881,7 @@ __webpack_require__.r(__webpack_exports__);
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"en":{"code":"en","cover":"Cover","toc":"Table of Contents","info":"Information","note":"Notes"},"vi":{"code":"vi","cover":"Bìa sách","toc":"Mục lục","info":"Giới thiệu","note":"Ghi chú"},"hi":{"code":"hi","cover":"आवरण","toc":"विषय - सूची","info":"जानकारी","note":"टिप्पणियाँ"}}');
-
-/***/ }),
-
-/***/ "?a259":
-/*!********************!*\
-  !*** fs (ignored) ***!
-  \********************/
-/***/ (() => {
-
-/* (ignored) */
-
-/***/ }),
-
-/***/ "?a5fc":
-/*!**********************!*\
-  !*** path (ignored) ***!
-  \**********************/
-/***/ (() => {
-
-/* (ignored) */
+module.exports = JSON.parse('{"pt":{"code":"pt-Br","cover":"Capa","toc":"Indice","info":"Informação","notes":"Anotações"},"en":{"code":"en","cover":"Cover","toc":"Table of Contents","info":"Information","note":"Notes"},"vi":{"code":"vi","cover":"Bìa sách","toc":"Mục lục","info":"Giới thiệu","note":"Ghi chú"},"hi":{"code":"hi","cover":"आवरण","toc":"विषय - सूची","info":"जानकारी","note":"टिप्पणियाँ"}}');
 
 /***/ })
 
@@ -2836,18 +1912,6 @@ module.exports = JSON.parse('{"en":{"code":"en","cover":"Cover","toc":"Table of 
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/global */
 /******/ 	(() => {
 /******/ 		__webpack_require__.g = (function() {
@@ -2858,22 +1922,6 @@ module.exports = JSON.parse('{"en":{"code":"en","cover":"Cover","toc":"Table of 
 /******/ 				if (typeof window === 'object') return window;
 /******/ 			}
 /******/ 		})();
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
 /******/ 	})();
 /******/ 	
 /************************************************************************/
