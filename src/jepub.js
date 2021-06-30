@@ -5,15 +5,17 @@ import imageType from 'image-type';
 
 import language from './i18n.json';
 
-import container from './tpl/META-INF/container.xml';
-import cover from './tpl/OEBPS/front-cover.html';
-import notes from './tpl/OEBPS/notes.html';
-import page from './tpl/OEBPS/page.html';
-import tocInBook from './tpl/OEBPS/table-of-contents.html';
-import info from './tpl/OEBPS/title-page.html';
-import bookConfig from './tpl/book.opf';
-import mime from './tpl/mimetype';
-import toc from './tpl/toc.ncx';
+import container from './tpl/epub/META-INF/container.xml';
+import cover from './tpl/epub/OEBPS/front-cover.html.ejs';
+import notes from './tpl/epub/OEBPS/notes.html.ejs';
+import page from './tpl/epub/OEBPS/page.html.ejs';
+import tocInBook from './tpl/epub/OEBPS/table-of-contents.html.ejs';
+import info from './tpl/epub/OEBPS/title-page.html.ejs';
+import bookConfig from './tpl/epub/book.opf.ejs';
+const mime = "application/epub+zip"
+import toc from './tpl/epub/toc.ncx.ejs';
+import JSZip from 'jszip';
+import ejs from 'ejs';
 
 export default class jEpub {
     constructor() {
@@ -199,7 +201,7 @@ export default class jEpub {
         if (!JSZip.support[type]) throw `This browser does not support ${type}`;
 
         let notes = this._Zip.file('OEBPS/notes.html');
-        notes = !notes ? false : true;
+        notes = !!notes;
 
         this._Zip.file('book.opf', ejs.render(bookConfig, {
             i18n: this._I18n,
