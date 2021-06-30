@@ -573,7 +573,7 @@ function bookConfig(i18n, uuid, date, title, author, publisher, description = ""
 
 \t<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
 \t\t<dc:title>${title}</dc:title>
-\t\t<dc:language>${i18n.code}</dc:language>
+\t\t<dc:language>${(i18n === null || i18n === void 0 ? void 0 : i18n.code) || ''}</dc:language>
 \t\t<dc:identifier id="PrimaryID" opf:scheme="${uuid.scheme}">${uuid.id}</dc:identifier>
         <dc:date opf:event="publication">${date}</dc:date>
         ${buildDescription}
@@ -606,15 +606,15 @@ function bookConfig(i18n, uuid, date, title, author, publisher, description = ""
 \t</spine>
 
 \t<guide>
-\t\t    ${cover ? `<reference type="cover" title="${i18n.cover}" href="OEBPS/front-cover.html" />` : ''}
-\t\t<reference type="toc" title="${i18n.toc}" href="OEBPS/table-of-contents.html" />
+\t\t    ${cover ? `<reference type="cover" title="${(i18n === null || i18n === void 0 ? void 0 : i18n.cover) || ''}" href="OEBPS/front-cover.html" />` : ''}
+\t\t<reference type="toc" title="${(i18n === null || i18n === void 0 ? void 0 : i18n.toc) || ''}" href="OEBPS/table-of-contents.html" />
 \t</guide>
 
 </package>
 `;
 }
 
-function toc(i18n, uuid, title, author, pages) {
+function toc(i18n, uuid, title, author, pages, notes) {
   let buildPages = '';
   let buildNotes = '';
 
@@ -634,7 +634,7 @@ function toc(i18n, uuid, title, author, pages) {
     buildNotes = `
         <navPoint id="notes-page" playOrder="2">
                 <navLabel>
-                    <text>${i18n.note}</text>
+                    <text>${(i18n === null || i18n === void 0 ? void 0 : i18n.note) || ''}</text>
                 </navLabel>
                 <content src="OEBPS/notes.html" />
             </navPoint>`;
@@ -644,7 +644,7 @@ function toc(i18n, uuid, title, author, pages) {
     <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
 
-<ncx version="2005-1" xml:lang="${i18n.code}" xmlns="http://www.daisy.org/z3986/2005/ncx/">
+<ncx version="2005-1" xml:lang="${(i18n === null || i18n === void 0 ? void 0 : i18n.code) || ''}" xmlns="http://www.daisy.org/z3986/2005/ncx/">
 \t<head>
 \t\t<meta name="dtb:uid" content="${uuid.id}" />
 \t\t<meta name="dtb:depth" content="2" />
@@ -663,13 +663,13 @@ function toc(i18n, uuid, title, author, pages) {
 \t<navMap>
 \t\t<navPoint id="title-page" playOrder="1">
 \t\t\t<navLabel>
-\t\t\t\t<text>${i18n.info}</text>
+\t\t\t\t<text>${(i18n === null || i18n === void 0 ? void 0 : i18n.info) || ''}</text>
 \t\t\t</navLabel>
 \t\t\t<content src="OEBPS/title-page.html" />
 \t\t</navPoint>
 \t\t<navPoint id="table-of-contents" playOrder="2">
 \t\t\t<navLabel>
-\t\t\t\t<text>${i18n.toc}</text>
+\t\t\t\t<text>${(i18n === null || i18n === void 0 ? void 0 : i18n.toc) || ''}</text>
 \t\t\t</navLabel>
 \t\t\t<content src="OEBPS/table-of-contents.html" />
 \t\t</navPoint>
