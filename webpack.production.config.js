@@ -1,50 +1,43 @@
 /* eslint-env node */
-const path = require('path');
+const path = require("path");
 
-const webpack = require('webpack');
-const PACKAGE = require('./package.json');
+const webpack = require("webpack");
+const PACKAGE = require("./package.json");
 const banner = `${PACKAGE.name} - ${PACKAGE.version} | (c) 2018 ${PACKAGE.author} | ${PACKAGE.license} | ${PACKAGE.homepage}`;
 
 module.exports = {
-    mode: 'production',
-    target: 'web',
-    entry: './src/jepub.js',
+    mode: "production",
+    target: "web",
+    entry: "./src/jepub.js",
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'jepub.min.js',
-        library: 'jEpub',
-        libraryTarget: 'umd',
-        umdNamedDefine: true
+        path: path.resolve(__dirname, "dist"),
+        filename: "jepub.min.js",
+        library: "jEpub",
+        libraryTarget: "umd",
+        umdNamedDefine: true,
     },
     resolve: {
         fallback: {
             fs: false,
-            path: false
+            path: false,
         },
-        extensions: ['.js', '.ejs']
+        extensions: [".js", ".ejs"],
     },
+    devtool: "source-map",
     module: {
         rules: [
             {
                 test: /[^.]|\.(xml|html|css|ejs)$/,
-                include: [
-                    path.resolve(__dirname, 'src/tpl')
-                ],
-                use: 'raw-loader'
+                include: [path.resolve(__dirname, "src/tpl")],
+                use: "raw-loader",
             },
             {
                 test: /\.js$/,
-                include: [
-                    path.resolve(__dirname, 'src')
-                ],
-                exclude: [
-                    path.resolve(__dirname, 'src/tpl')
-                ],
-                use: 'babel-loader'
-            }
-        ]
+                include: [path.resolve(__dirname, "src")],
+                exclude: [path.resolve(__dirname, "src/tpl")],
+                use: "babel-loader",
+            },
+        ],
     },
-    plugins: [
-        new webpack.BannerPlugin(banner)
-    ]
+    plugins: [new webpack.BannerPlugin(banner)],
 };
