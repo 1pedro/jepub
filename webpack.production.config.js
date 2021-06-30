@@ -18,12 +18,13 @@ module.exports = {
     },
     resolve: {
         fallback: {
+            assert: require.resolve("assert/"),
             fs: false,
             path: false,
         },
         extensions: [".js", ".ejs"],
     },
-    devtool: "source-map",
+    devtool: "inline-source-map",
     module: {
         rules: [
             {

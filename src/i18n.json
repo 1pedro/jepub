@@ -1,4 +1,11 @@
 {
+  "pt": {
+    "code": "pt-Br",
+    "cover": "Capa",
+    "toc": "Indice",
+    "info": "Informação",
+    "notes": "Anotações"
+  },
   "en": {
     "code": "en",
     "cover": "Cover",
@@ -12,7 +19,7 @@
     "toc": "Mục lục",
     "info": "Giới thiệu",
     "note": "Ghi chú"
-  }, 
+  },
   "hi": {
     "code": "hi",
     "cover": "आवरण",
