@@ -185,7 +185,7 @@ export default class Jepub implements jEpub {
             alt,
         });
 
-        if (!this._Zip.folder(/courses/).length) {
+        if (!this._Zip.folder(/assets/).length) {
             this._Zip.file(`OEBPS/assets`, null, {
                 createFolders: true,
                 dir: true,
