@@ -1,15 +1,17 @@
-export function toc(i18n, pages) {
+import { jEpub } from "src/declare";
+
+export function toc(i18n: jEpub["_I18n"], pages: jEpub["_Pages"]) {
     let buildPages = "";
 
-    pages.forEach((title, index) => {
+    pages.forEach((title: string, index: number) => {
         buildPages += `
         <li class="chaptertype-1">
             <a href="page-${index}.html">
                 <span class="toc-chapter-title">${title}</span>
             </a>
         </li>
-        `
-    })
+        `;
+    });
 
     return `
     <?xml version="1.0" encoding="UTF-8" ?>
@@ -31,5 +33,5 @@ export function toc(i18n, pages) {
 </body>
 
 </html>
-`
+`;
 }

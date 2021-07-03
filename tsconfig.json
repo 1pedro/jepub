@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "outDir": "./lib",
+    "resolveJsonModule": true,
+    "target": "es5"
+  }
+}

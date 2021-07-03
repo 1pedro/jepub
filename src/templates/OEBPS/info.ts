@@ -1,16 +1,26 @@
-export function info(i18n, title, author, publisher,tags, description ="") {
-    let buildTags = ""
-    let buildDescription = ""
-    if(Array.isArray(tags) && tags.length){
-        buildTags += "<div class=\"part-title-wrap\">"
-        tags.forEach(tag => {
+import { jEpub } from "src/declare";
+
+export function info(
+    i18n: jEpub["_I18n"],
+    title: string,
+    author: string,
+    publisher: string,
+    tags: string[],
+    description = ""
+) {
+    let buildTags = "";
+    let buildDescription = "";
+
+    if (Array.isArray(tags) && tags.length) {
+        buildTags += '<div class="part-title-wrap">';
+        tags.forEach((tag) => {
             buildTags += `<code> ${tag} </code>`;
-        })
-        buildTags+= "</div>"
+        });
+        buildTags += "</div>";
     }
 
-    if(description) {
-        buildDescription += `<div class=\"ugc\"> ${description} </div>`
+    if (description) {
+        buildDescription += `<div class="ugc"> ${description} </div>`;
     }
 
     return `
@@ -36,5 +46,5 @@ export function info(i18n, title, author, publisher,tags, description ="") {
 </body>
 
 </html>
-`
+`;
 }
