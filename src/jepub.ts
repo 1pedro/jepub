@@ -214,8 +214,13 @@ export default class Jepub implements jEpub {
             if (!Array.isArray(newContent)) {
                 this._Images.forEach((image) => {
                     newContent = newContent.replace(
-                        `{{ ${image.name} }}`,
-                        `<img src="${image.path}" alt="${image.alt}"> </img>`
+                        `{{ ${image.name}-src }}`,
+                        image.path
+                    );
+
+                    newContent = newContent.replace(
+                        `{{ ${image.name}-alt }}`,
+                        image.alt
                     );
                 });
                 newContent = utils.parseDOM(newContent);
