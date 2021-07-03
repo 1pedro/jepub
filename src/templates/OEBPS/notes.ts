@@ -1,5 +1,6 @@
+import { jEpub } from "src/declare";
 
-export function notes ( i18n, notes ) {
+export function notes(i18n: jEpub["_I18n"], allNotes: string) {
     return `
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -13,12 +14,11 @@ export function notes ( i18n, notes ) {
 <body>
 \t<div id="notes-page">
 \t\t<div class="ugc">
-            ${notes}
+            ${allNotes}
 \t\t</div>
 \t</div>
 </body>
 
 </html>
 `;
-
 }

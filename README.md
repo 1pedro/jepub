@@ -1,4 +1,4 @@
-# jEpub
+# jepub
 
 [![npm version](https://badge.fury.io/js/jepub.svg)](https://www.npmjs.com/package/jepub)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Flelinhtinh%2FjEpub.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Flelinhtinh%2FjEpub?ref=badge_shield)
@@ -30,12 +30,12 @@ or:
 
 ## Dependencies
 
-jEpub requires [JSZip](https://github.com/Stuk/jszip) and [EJS](https://github.com/mde/ejs). Make sure these libraries are loaded before starting your code.
+jepub requires [JSZip](https://github.com/Stuk/jszip) and [EJS](https://github.com/mde/ejs). Make sure these libraries are loaded before starting your code.
 
 ```html
 <script src="jszip.js"></script>
 <script src="ejs.js"></script>
-<script src="jepub.js"></script>
+<script src="jepub.ts"></script>
 <script>
     const jepub = new jEpub()
     // jepub.init({
@@ -46,7 +46,7 @@ jEpub requires [JSZip](https://github.com/Stuk/jszip) and [EJS](https://github.c
 ## Usage
 
 ```typescript
-const jepub = new jEpub()
+const jepub = new jepub()
 jepub.init({
     i18n: 'en', // Internationalization
     title: 'Book title',
@@ -130,7 +130,7 @@ jepub.generate(type = 'blob', onUpdate?: metadata => void)
 #### Convert HTML to text
 
 ```typescript
-jEpub.html2text(html: string, noBr = false)
+jepub.html2text(html: string, noBr = false)
 ```
 
 - **html**: HTML string.
