@@ -2,11 +2,10 @@
 import imageType from "image-type";
 import JSZip from "jszip";
 
-import language from "src/i18n.json";
-import { cover, info, notes, page, toc } from "src/templates/OEBPS";
-
 import { jEpub, jEpubInfo } from "./declare";
+import language from "./i18n.json";
 import { bookConfig, bookToc } from "./templates/epub";
+import { cover, info, notes, page, toc } from "./templates/OEBPS";
 import * as utils from "./utils";
 
 const container = `<?xml version="1.0" encoding="UTF-8" ?>
@@ -216,7 +215,7 @@ export default class Jepub implements jEpub {
                 this._Images.forEach((image) => {
                     newContent = newContent.replace(
                         `{{ ${image.name} }}`,
-                        `<img src="${image.path}" alt=""> </img>`
+                        `<img src="${image.path}" alt="${image.alt}"> </img>`
                     );
                 });
                 newContent = utils.parseDOM(newContent);
