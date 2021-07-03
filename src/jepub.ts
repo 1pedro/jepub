@@ -185,7 +185,14 @@ export default class Jepub implements jEpub {
             alt,
         });
 
-        this._Zip.file(`OEBPS/${path}`, data);
+        if (!this._Zip.folder(/courses/).length) {
+            this._Zip.file(`OEBPS/assets`, null, {
+                createFolders: true,
+                dir: true,
+            });
+        }
+
+        this._Zip.file(`OEBPS/${path}`, data, { binary: true });
 
         return this;
     }
