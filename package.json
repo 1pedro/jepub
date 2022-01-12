@@ -71,5 +71,5 @@
       "post-merge": "repo-tools install-packages"
     }
   },
-  "typings": "lib/index"
+  "typings": "lib/jepub"
 }

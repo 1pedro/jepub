@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 import imageType from "image-type";
 import JSZip from "jszip";
 

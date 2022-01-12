@@ -1,4 +1,3 @@
-import * as Buffer from "buffer";
 import JSZip from "jszip";
 
 export interface Jepub {
