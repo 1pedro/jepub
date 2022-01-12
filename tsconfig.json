@@ -1,9 +1,18 @@
 {
   "compilerOptions": {
+    "declaration": true,
+    "allowJs": true,
+    "skipLibCheck": true,
     "baseUrl": ".",
     "esModuleInterop": true,
-    "outDir": "./lib",
+    "moduleResolution": "node",
+    "outDir": "lib",
     "resolveJsonModule": true,
-    "target": "es5"
-  }
+    "target": "esnext",
+    "strict": true,
+  },
+  "include": [
+    "src/**/*",
+    "*.d.ts"
+  ]
 }

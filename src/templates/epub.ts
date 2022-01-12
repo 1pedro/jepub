@@ -1,18 +1,18 @@
-import { jEpub } from "src/declare";
+import { Jepub } from "src/types";
 
 export function bookConfig(
-    i18n: jEpub["_I18n"],
-    uuid: jEpub["_Uuid"],
+    i18n: Jepub["_i18n"],
+    uuid: Jepub["_uuid"],
     date: string,
     title: string,
     author: string,
     publisher: string,
     description = "",
     tags: string[],
-    cover: jEpub["_Cover"],
-    pages: jEpub["_Pages"],
-    notes,
-    images: jEpub["_Images"]
+    cover: Jepub["_cover"],
+    pages: Jepub["_pages"],
+    notes: boolean,
+    images: Jepub["_images"]
 ) {
     let buildPages = "";
     let buildTocPages = "";
@@ -109,11 +109,11 @@ export function bookConfig(
 }
 
 export function bookToc(
-    i18n: jEpub["_I18n"],
-    uuid: jEpub["_Uuid"],
+    i18n: Jepub["_i18n"],
+    uuid: Jepub["_uuid"],
     title: string,
     author: string,
-    pages: jEpub["_Pages"],
+    pages: Jepub["_pages"],
     hasNotes: boolean
 ) {
     let buildPages = "";

@@ -15,7 +15,7 @@ export function uuidv4() {
  * @see https://stackoverflow.com/a/14706877
  * @returns {boolean}
  */
-export function isObject(obj) {
+export function isObject(obj: any) {
     const type = typeof obj;
 
     return type === "function" || (type === "object" && !!obj);
@@ -25,7 +25,7 @@ export function isObject(obj) {
  * Checks if a value is empty
  * @returns {boolean}
  */
-export function isEmpty(val) {
+export function isEmpty(val: string | null | undefined) {
     if (val === null) {
         return true;
     } else if (typeof val === "string") {
@@ -49,13 +49,13 @@ export function getISODate(date = new Date()) {
  * @param {String} html
  * @param {String} outText return as plain text
  */
-export function parseDOM(html, outText = false): string {
+export function parseDOM(html: string, outText = false): string {
     const doc = new DOMParser().parseFromString(
         `<!doctype html><body>${html}`,
         "text/html"
     );
 
-    if (outText) {
+    if (outText && doc && doc.body && doc.body.textContent) {
         return doc.body.textContent.trim();
     }
 
@@ -91,7 +91,7 @@ export function html2text(html: string, noBr: boolean = false) {
  * @see https://gist.github.com/dperini/729294
  * @param {String} value
  */
-export function validateUrl(value) {
+export function validateUrl(value: string) {
     return /^(?:https?|ftp):\/\/(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(
         value
     );
@@ -101,7 +101,7 @@ export function validateUrl(value) {
  * Convert MIME type to extension
  * @param {String} mime
  */
-export function mime2ext(mime) {
+export function mime2ext(mime: string) {
     let ext = null;
 
     switch (mime) {
@@ -127,16 +127,3 @@ export function mime2ext(mime) {
 
     return ext;
 }
-
-// TODO: kepub
-// Wrap text, image <span class="koboSpan" id="kobo.{para:số thứ tự đoạn văn, bắt đầu bằng 1}.{seg: số thứ tự cụm bị wrap, bắt đầu bằng 1}">text</span>
-// https://github.com/pgaskin/kepubify/blob/871aa0bb2047b5ba171bc608024bdb180cb29d70/kepub/transform.go#L173
-
-// UnescapeString
-// var htmlEscaper = strings.NewReplacer(
-// 	`&`, "&amp;",
-// 	`'`, "&#39;", // "&#39;" is shorter than "&apos;" and apos was not in HTML until HTML5.
-// 	`<`, "&lt;",
-// 	`>`, "&gt;",
-// 	`"`, "&#34;", // "&#34;" is shorter than "&quot;".
-// )

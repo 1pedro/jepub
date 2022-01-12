@@ -1,6 +1,6 @@
-import { jEpub } from "src/declare";
+import { Jepub } from "src/types";
 
-export function toc(i18n: jEpub["_I18n"], pages: jEpub["_Pages"]) {
+export function toc(i18n: Jepub["_i18n"], pages: Jepub["_pages"]) {
     let buildPages = "";
 
     pages.forEach((title: string, index: number) => {

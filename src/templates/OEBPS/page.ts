@@ -1,7 +1,7 @@
-import { jEpub } from "src/declare";
+import { Jepub } from "src/types";
 
 export function page(
-    i18n: jEpub["_I18n"],
+    i18n: Jepub["_i18n"],
     title: string,
     content: string | string[]
 ) {
