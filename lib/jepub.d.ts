@@ -18,5 +18,5 @@ export default class Jepub implements Types.Jepub {
     image(data: Blob | ArrayBuffer, name: string, alt?: string): this;
     notes(content: string): this;
     add(title: string, content: string, index?: number): this;
-    generate(type: Types.JepubOutputTypes | undefined, onUpdate: () => void): Promise<Blob | Buffer | ArrayBuffer | Uint8Array>;
+    generate(type: Types.JepubOutputTypes | undefined, onUpdate: (metadata: any) => void): Promise<Blob | Buffer | ArrayBuffer | Uint8Array>;
 }

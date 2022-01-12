@@ -244,8 +244,8 @@ export default class Jepub implements Types.Jepub {
     }
 
     generate(
-        type = "blob" as JepubOutputTypes,
-        onUpdate: () => void
+        type: JepubOutputTypes = "blob",
+        onUpdate: (metadata: any) => void
     ): Promise<Blob | Buffer | ArrayBuffer | Uint8Array> {
         if (!JSZip.support[type]) {
             throw new Error(`This browser does not support ${type}`);
