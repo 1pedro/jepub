@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "outDir": "lib",
     "resolveJsonModule": true,
-    "target": "esnext",
+    "target": "ES2019",
     "strict": true,
   },
   "include": [
