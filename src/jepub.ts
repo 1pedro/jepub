@@ -69,6 +69,7 @@ export default class Jepub implements Types.Jepub {
 
         this._zip = new JSZip();
         this._zip.file("mimetype", mime);
+        this._zip.file("META-INF/container.xml", container);
         this._zip.file("epub/container.xml", container);
         this._zip.file(
             "OEBPS/title-page.html",
